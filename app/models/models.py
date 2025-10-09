@@ -1,10 +1,17 @@
 from sqlalchemy import (
-    Column, Integer, BigInteger, String, Text, Boolean, Numeric, ForeignKey,
-    TIMESTAMP, func, CheckConstraint, Table
+    Column, BigInteger, String, Text, Boolean, Numeric, Integer, ForeignKey,
+    TIMESTAMP, func, Table, CheckConstraint, Index, UniqueConstraint
 )
 from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
+
+product_tags = Table(
+    "product_tags",
+    Base.metadata,
+    Column("product_id", BigInteger, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True),
+    Column("tag_id", BigInteger, ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True),
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -26,13 +33,6 @@ class Category(Base):
 
     products = relationship("Product", back_populates="category")
 
-product_tags = Table(
-    "product_tags",
-    Base.metadata,
-    Column("product_id", BigInteger, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True),
-    Column("tag_id", BigInteger, ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True)
-)
-
 class Product(Base):
     __tablename__ = "products"
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -47,6 +47,12 @@ class Product(Base):
     category = relationship("Category", back_populates="products")
     tags = relationship("Tag", secondary=product_tags, back_populates="products")
     reviews = relationship("Review", back_populates="product")
+
+    __table_args__ = (
+        CheckConstraint("price >= 0", name="ck_product_price_non_negative"),
+        CheckConstraint("stock >= 0", name="ck_product_stock_non_negative"),
+        Index("ix_products_category", "category_id"),
+    )
 
 class Tag(Base):
     __tablename__ = "tags"
@@ -66,6 +72,10 @@ class Order(Base):
     user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
 
+    __table_args__ = (
+        CheckConstraint("total_amount >= 0", name="ck_order_total_non_negative"),
+    )
+
 class OrderItem(Base):
     __tablename__ = "order_items"
     id = Column(BigInteger, primary_key=True, autoincrement=True)
@@ -76,6 +86,12 @@ class OrderItem(Base):
 
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
+
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_orderitem_quantity_positive"),
+        CheckConstraint("unit_price >= 0", name="ck_orderitem_unit_price_non_negative"),
+        Index("ix_order_items_order", "order_id"),
+    )
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -88,3 +104,8 @@ class Review(Base):
 
     product = relationship("Product", back_populates="reviews")
     user = relationship("User", back_populates="reviews")
+
+    __table_args__ = (
+        CheckConstraint("rating BETWEEN 1 AND 5", name="ck_review_rating_range"),
+        UniqueConstraint("product_id", "user_id", name="uq_review_product_user"),
+    )

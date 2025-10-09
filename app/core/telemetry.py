@@ -7,7 +7,6 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 def init_tracing(app):
     resource = Resource.create({"service.name": "shop-api"})
     provider = TracerProvider(resource=resource)
-    processor = BatchSpanProcessor(ConsoleSpanExporter())
-    provider.add_span_processor(processor)
+    provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
     trace.set_tracer_provider(provider)
     FastAPIInstrumentor().instrument_app(app)

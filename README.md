@@ -1,16 +1,14 @@
 # Shop API
 
-## Uruchomienie
-1. Zainstaluj Docker Desktop (Windows/mac) lub Docker Engine (Linux).
-2. W katalogu projektu:
+## Uruchomienie (dev)
+1. Skopiuj repo i przejdź do katalogu:
+   cd shop-api
+2. Uruchom:
    docker compose up --build
+3. Po chwili:
+- API: http://localhost:8000/docs
+- DB: localhost:5432 (user: shop / pass: shop / db: shopdb)
 
-3. API:
-   http://localhost:8000/docs
-
-## Hot-reload
-Kod jest montowany do kontenera (volumes), a uvicorn uruchomiony z --reload — zmiany w plikach będą restartować serwer automatycznie.
-
-## DB
-Postgres na porcie 5432 (używa danych z volume `db_data`).
-
+## Migrations (Alembic)
+W kontenerze app:
+   docker compose exec app alembic upgrade head

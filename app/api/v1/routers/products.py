@@ -1,31 +1,32 @@
-from fastapi import APIRouter, Depends, status, Response, HTTPException
+from fastapi import APIRouter, Depends, status, Response
+from typing import List
 from sqlalchemy.orm import Session
 
 from app.schemas.v1 import ProductCreate, ProductRead
-from app.db.session import SessionLocal
-from app.models.models import Product
+from app.services.product_service import ProductService
+from app.api.v1.deps import get_db
 
 router = APIRouter(prefix="/api/v1/products", tags=["products"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 @router.post("/", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
 def create_product(payload: ProductCreate, response: Response, db: Session = Depends(get_db)):
-    existing = db.query(Product).filter(Product.sku == payload.sku).one_or_none()
-    if existing:
-        raise HTTPException(status_code=409, detail="Product with this SKU already exists")
-    p = Product(sku=payload.sku, name=payload.name, description=payload.description or "", price=payload.price, stock=payload.stock)
-    db.add(p)
-    db.commit()
-    db.refresh(p)
-    response.headers["Location"] = f"/api/v1/products/{p.id}"
-    return p
+    svc = ProductService(db)
+    product = svc.create_product(payload)
+    response.headers["Location"] = f"/api/v1/products/{product.id}"
+    return product
 
-@router.get("/", response_model=list[ProductRead])
+@router.get("/", response_model=List[ProductRead])
 def list_products(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
-    return db.query(Product).offset(skip).limit(limit).all()
+    svc = ProductService(db)
+    return svc.list_products(skip=skip, limit=limit)
+
+@router.get("/{product_id}", response_model=ProductRead)
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    svc = ProductService(db)
+    return svc.get_product(product_id)
+
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    svc = ProductService(db)
+    svc.delete_product(product_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
