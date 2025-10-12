@@ -67,7 +67,7 @@ Projekt jest w fazie **rozwojowej** i będzie stopniowo rozbudowywany o kolejne 
 
 a) Skopiuj repozytorium i przejdź do katalogu:
    ```bash
-   cd shop-api
+   cd ShopAPI
    ```
 
 b) Uruchom:
