@@ -16,3 +16,6 @@ class OrderRepository:
         self.db.add(order)
         self.db.flush()
         return order
+    
+    def delete(self, order: Order):
+        self.db.delete(order)

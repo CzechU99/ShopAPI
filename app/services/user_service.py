@@ -4,7 +4,7 @@ from fastapi import HTTPException
 
 from app.repositories.user_repo import UserRepository
 from app.models.models import User
-from app.schemas.v1 import UserCreate
+from app.schemas.v1 import UserCreate, UserUpdate
 
 pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -27,6 +27,28 @@ class UserService:
         self.db.commit()
         self.db.refresh(user)
         return user
+    
+    def update_user(self, dto: UserUpdate, user_id: int) -> User:
+        user = self.repo.get_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if dto.email:
+            user.email = dto.email
+
+        if dto.password:
+            user.hashed_password = dto.hashed_password
+
+        if dto.full_name:
+            user.full_name = dto.full_name
+
+        if dto.is_active:
+            user.is_active = dto.is_active
+
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
 
     def list_users(self, skip=0, limit=50):
         return self.repo.list(skip=skip, limit=limit)

@@ -1,5 +1,5 @@
 from typing import Optional, List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.models.models import Product, Tag
 
 class ProductRepository:
@@ -13,7 +13,13 @@ class ProductRepository:
         return self.db.query(Product).filter(Product.sku == sku).one_or_none()
 
     def list(self, skip: int = 0, limit: int = 50) -> List[Product]:
-        return self.db.query(Product).offset(skip).limit(limit).all()
+        return (
+            self.db.query(Product)
+            .options(selectinload(Product.tags))
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def create(self, product: Product) -> Product:
         self.db.add(product)

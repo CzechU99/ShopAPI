@@ -9,7 +9,7 @@ if config.config_file_name:
     fileConfig(config.config_file_name)
 
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))  # project root
+sys.path.append(os.path.dirname(os.path.dirname(__file__))) 
 from app.core.config import settings
 from app.models.models import Base
 

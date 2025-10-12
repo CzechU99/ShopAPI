@@ -1,4 +1,3 @@
-# File: alembic/versions/0001_initial.py
 """initial
 
 Revision ID: 0001_initial
