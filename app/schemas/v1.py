@@ -21,7 +21,7 @@ class UserRead(BaseModel):
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     full_name: Optional[str] = None
-    password: Optional[str] = Field(min_length=8, default=None)
+    hash_password: Optional[str] = Field(min_length=8, default=None)
     is_active: Optional[bool] = None
 
 class ProductCreate(BaseModel):
