@@ -12,3 +12,12 @@ opentelemetry-api
 opentelemetry-sdk
 opentelemetry-instrumentation-fastapi
 email-validator
+pytest
+pytest-asyncio
+pytest-mock
+httpx
+requests
+sqlalchemy-utils
+psycopg2-binary
+python-dotenv
+testcontainers[postgresql]

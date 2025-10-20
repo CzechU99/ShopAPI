@@ -11,6 +11,16 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    
+  db_test:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: testshop
+      POSTGRES_PASSWORD: testshop
+      POSTGRES_DB: testshopdb
+    ports:
+      - "5433:5432"
+    profiles: ["test"]
 
   app:
     build: .

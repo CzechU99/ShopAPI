@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, condecimal, conint
+from pydantic import BaseModel, EmailStr, Field, condecimal, conint, ConfigDict
 from typing import Optional, List
 from decimal import Decimal
 from datetime import datetime
@@ -15,8 +15,7 @@ class UserRead(BaseModel):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
@@ -53,15 +52,13 @@ class ProductRead(BaseModel):
     tag_names: Optional[List[str]] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TagRead(BaseModel):
     id: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ProductReadOrder(BaseModel):
     id: int
@@ -88,8 +85,7 @@ class OrderItemRead(BaseModel):
     quantity: int
     unit_price: Decimal
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class OrderRead(BaseModel):
     id: int
@@ -98,8 +94,7 @@ class OrderRead(BaseModel):
     total_amount: Decimal
     items: List[OrderItemRead]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class OrderItemUpdate(BaseModel):
     product_id: int
@@ -114,8 +109,7 @@ class CategoryRead(BaseModel):
     name: str
     slug: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ReviewRead(BaseModel):
     id: int
@@ -124,5 +118,4 @@ class ReviewRead(BaseModel):
     rating: int
     comment: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

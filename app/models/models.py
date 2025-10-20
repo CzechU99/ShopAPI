@@ -2,9 +2,9 @@ from sqlalchemy import (
     Column, BigInteger, String, Text, Boolean, Numeric, Integer, ForeignKey,
     TIMESTAMP, func, Table, CheckConstraint, Index, UniqueConstraint
 )
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship
+from app.db.base import Base 
 
-Base = declarative_base()
 
 product_tags = Table(
     "product_tags",
