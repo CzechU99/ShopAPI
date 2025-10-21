@@ -24,6 +24,7 @@
 
 Projekt jest produkcjonopodobnym **REST API sklepu internetowego** w architekturze N-tier, który umożliwia pracę z relacyjną bazą danych PostgreSQL. Projekt ma na celu:
 
+#### ETAP I:
 - Zaprojektowanie relacyjnego modelu danych z co najmniej **5 tabelami**, obejmującymi:
   - ≥ 2 relacje jeden-do-wielu  
   - ≥ 1 relację wiele-do-wielu (z tabelą pośrednią)  
@@ -34,6 +35,8 @@ Projekt jest produkcjonopodobnym **REST API sklepu internetowego** w architektur
 - Umożliwienie **CRUD** dla przynajmniej 3 encji i odczytu dla pozostałych  
 - Walidację danych wejściowych i obsługę błędów HTTP  
 - Wersjonowanie API (np. `/api/v1/...`)  
+
+#### ETAP II:
 - Integrację testów jednostkowych i integracyjnych z rzeczywistą bazą PostgreSQL (Docker)
 - Testy integracyjne z izolowaną bazą testową, rollback lub czyszczenie po każdym teście 
 
