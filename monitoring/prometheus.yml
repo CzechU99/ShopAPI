@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "main_api"
+    static_configs:
+      - targets: ["app:8000"]
+
+  - job_name: "external_service"
+    static_configs:
+      - targets: ["external_service:8001"]
+
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres_exporter:9187"]

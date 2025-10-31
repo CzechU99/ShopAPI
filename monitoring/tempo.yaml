@@ -1,0 +1,37 @@
+server:
+  http_listen_port: 3200
+  # Use a separate internal gRPC port to avoid conflict with OTLP gRPC (4317)
+  grpc_listen_port: 9095
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: memberlist
+      replication_factor: 1
+  trace_idle_period: 10s
+  max_block_duration: 5m
+
+memberlist:
+  # Run as single-node; join self by service name
+  join_members:
+    - tempo
+
+compactor:
+  compaction:
+    block_retention: 24h
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo

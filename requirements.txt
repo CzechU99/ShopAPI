@@ -21,3 +21,7 @@ sqlalchemy-utils
 psycopg2-binary
 python-dotenv
 testcontainers[postgresql]
+opentelemetry-exporter-otlp
+opentelemetry-instrumentation-requests
+opentelemetry-instrumentation-logging
+prometheus-fastapi-instrumentator

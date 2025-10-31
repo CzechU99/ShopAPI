@@ -26,6 +26,7 @@ services:
     build: .
     depends_on:
       - db
+      - tempo
     environment:
       DATABASE_URL: postgresql://shop:shop@db:5432/shopdb
     volumes:
@@ -45,6 +46,53 @@ services:
       - "8080:80"
     depends_on:
       - db
+  
+  external_service:
+    build: ./external_service
+    container_name: external_service
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+      - tempo
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./monitoring/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200"   # Tempo UI
+      - "4317:4317"   # gRPC
+      - "4318:4318"
+
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    ports:
+      - "3100:3100"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/provisioning:/etc/grafana/provisioning
 
 volumes:
   db_data:
