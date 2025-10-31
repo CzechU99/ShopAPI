@@ -56,6 +56,16 @@ services:
       - db
       - tempo
 
+  postgres_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    container_name: postgres_exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://shop:shop@db:5432/shopdb?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - db
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -82,6 +92,17 @@ services:
     ports:
       - "3100:3100"
 
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: ["-config.file=/etc/promtail/config.yml"]
+    depends_on:
+      - loki
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -89,10 +110,12 @@ services:
       - prometheus
       - tempo
       - loki
+      - promtail
     ports:
       - "3000:3000"
     volumes:
       - ./monitoring/provisioning:/etc/grafana/provisioning
+      - ./monitoring/dashboards:/etc/grafana/dashboards
 
 volumes:
   db_data:

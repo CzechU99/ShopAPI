@@ -6,6 +6,9 @@ from app.api.v1.routers import users, products, orders, categories, tags, review
 from app.middlewares.correlation import CorrelationIdMiddleware
 from app.telemetry.tracing import setup_tracing
 from prometheus_fastapi_instrumentator import Instrumentator
+from app.telemetry.logging_config import setup_json_logging
+from app.middlewares.request_logging import RequestLoggingMiddleware
+from app.telemetry.metrics import setup_db_metrics
 
 
 @asynccontextmanager
@@ -15,6 +18,12 @@ async def lifespan(app: FastAPI):
         setup_tracing(app, "main_api")
     except Exception:
         # Do not break startup if tracing backend is unavailable
+        pass
+    # Logging & DB metrics
+    setup_json_logging("main_api")
+    try:
+        setup_db_metrics(engine)
+    except Exception:
         pass
     yield
 
@@ -30,6 +39,7 @@ app.include_router(reviews.router)
 app.include_router(external_proxy.router)
 
 app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Expose Prometheus metrics at /metrics
 Instrumentator().instrument(app).expose(app, include_in_schema=False)

@@ -1,0 +1,46 @@
+{
+  "uid": "observability-basic",
+  "title": "Shop API Observability",
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "browser",
+  "tags": ["shop", "observability"],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP Requests - main_api",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{job=\"main_api\"}[5m])) by (code, method)",
+          "legendFormat": "{{method}} {{code}}"
+        }
+      ],
+      "datasource": {"type": "prometheus", "name": "Prometheus"}
+    },
+    {
+      "type": "timeseries",
+      "title": "DB Query Duration (p95)",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket[5m])) by (le, statement))",
+          "legendFormat": "{{statement}} p95"
+        }
+      ],
+      "datasource": {"type": "prometheus", "name": "Prometheus"}
+    },
+    {
+      "type": "timeseries",
+      "title": "External Service Failures",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "rate(ext_service_failures_total[5m])",
+          "legendFormat": "failures/s"
+        }
+      ],
+      "datasource": {"type": "prometheus", "name": "Prometheus"}
+    }
+  ]
+}

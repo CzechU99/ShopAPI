@@ -2,10 +2,15 @@
 import requests
 import logging
 from typing import Optional
+from prometheus_client import Counter
 
 logger = logging.getLogger("app.external_client")
 
 EXTERNAL_URL = "http://external_service:8001/external/data"  # nazwa usługi w docker-compose
+
+EXT_SERVICE_FAILURES = Counter(
+    "ext_service_failures_total", "Number of external service call failures"
+)
 
 def call_external_service(correlation_id: Optional[str] = None, timeout: int = 5):
     headers = {}
@@ -18,5 +23,6 @@ def call_external_service(correlation_id: Optional[str] = None, timeout: int = 5
         logger.info(f"external_client: call success, status={resp.status_code}, correlation_id={correlation_id}")
         return resp.json()
     except Exception as e:
+        EXT_SERVICE_FAILURES.inc()
         logger.error(f"external_client: call failed, correlation_id={correlation_id}, error={e}")
         raise

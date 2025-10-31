@@ -3,6 +3,9 @@ from telemetry.tracing import setup_tracing
 from starlette.middleware.base import BaseHTTPMiddleware
 import uuid
 from prometheus_fastapi_instrumentator import Instrumentator
+from telemetry.tracing import setup_tracing
+from telemetry.logging_config import setup_json_logging
+from middlewares.request_logging import RequestLoggingMiddleware
 
 
 class CorrelationIdMiddleware(BaseHTTPMiddleware):
@@ -16,11 +19,13 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
 
 app = FastAPI(title="External Service")
 
-# Init OpenTelemetry tracing
+# Init OpenTelemetry tracing & logging
 setup_tracing(app)
+setup_json_logging("external_service")
 
 # Correlation ID propagation
 app.add_middleware(CorrelationIdMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Expose Prometheus metrics at /metrics
 Instrumentator().instrument(app).expose(app, include_in_schema=False)
