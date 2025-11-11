@@ -140,6 +140,49 @@ Name: `trace_id`, Regex: `"trace_id"\s*:\s*"([a-f0-9]{32})"`, Data source: `Temp
 
 ---
 
+## 📈 Load Testing (Grafana k6 – Lab 4)
+
+1. **Start the full stack** with `docker compose up --build`. The `external_service` now injects a random delay between **30–120s** (tunable via `EXTERNAL_DELAY_MIN_SECONDS` / `EXTERNAL_DELAY_MAX_SECONDS`).
+2. **Tune the outbound HTTP client** in the main API via environment variables (examples below) before restarting the `app` container:
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `EXT_CLIENT_READ_TIMEOUT` | Read/response timeout in seconds | `180` |
+| `EXT_CLIENT_CONNECT_TIMEOUT` | TCP connect timeout | `2` |
+| `EXT_CLIENT_WRITE_TIMEOUT` | Body upload timeout | `5` |
+| `EXT_CLIENT_POOL_TIMEOUT` | Wait time for a free pooled connection (s) | `0.05` |
+| `EXT_CLIENT_MAX_CONNECTIONS` | Total HTTP connections allowed by httpx | `100` |
+| `EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS` | Keep-alive pool size | `20` |
+| `EXT_CLIENT_KEEPALIVE_EXPIRY` | Idle time before closing keep-alive sockets (s) | `5` |
+| `EXT_CLIENT_HTTP2_ENABLED` | Toggle HTTP/2 (`true` / `false`) | `true` |
+
+3. **Run k6 with Prometheus Remote Write** so every experiment shows up in Grafana:
+
+```bash
+export K6_PROMETHEUS_RW_SERVER_URL="http://localhost:9090/api/v1/write"
+export K6_PROMETHEUS_RW_TREND_STATS="p(95),p(99),min,max"
+export K6_TEST_ID="lab4-$(date +%s)"
+
+K6_CASE="maxconn-100-pool-100ms" \
+K6_RATE=25 \
+K6_DURATION=5m \
+K6_PRE_ALLOCATED_VUS=50 \
+K6_MAX_VUS=500 \
+K6_EXECUTOR=constant-arrival-rate \
+K6_HTTP_TIMEOUT=190000 \
+K6_ITER_SLEEP=0 \
+K6_TEST_ID="$K6_TEST_ID" \
+k6 run -o experimental-prometheus-rw --tag testid="$K6_TEST_ID" tests/k6/lab4.js
+```
+
+Use the `K6_CASE` tag (e.g., `maxconn-10-pool-0ms`, `keepalive-50`, `http1`) to distinguish runs in Prometheus/Grafana and copy the tag into screenshot filenames.
+
+4. **Dashboard evidence** – drop screenshots for every experiment under `docs/load-tests/` using the filenames from the assignment (see `docs/load-tests/README.md`). Keep the short narrative in `docs/load-tests/REPORT.md` updated with latency/error-rate findings and the PromQL queries you used.
+
+5. **Slow PostgreSQL experiment** – adjust the `db` container settings (e.g., via `ALTER SYSTEM` or a custom config file) to mimic the “Making Postgres 42000x slower” techniques, then re-run the same k6 scenario and capture the increased latency in Grafana.
+
+---
+
 ## 🧪 Testy
 
 - Testy jednostkowe sprawdzają logikę serwisów z mockowanymi repozytoriami.

@@ -29,6 +29,15 @@ services:
       - tempo
     environment:
       DATABASE_URL: postgresql://shop:shop@db:5432/shopdb
+      EXTERNAL_SERVICE_URL: http://external_service:8001
+      EXT_CLIENT_CONNECT_TIMEOUT: 2
+      EXT_CLIENT_READ_TIMEOUT: 180
+      EXT_CLIENT_WRITE_TIMEOUT: 5
+      EXT_CLIENT_POOL_TIMEOUT: 0.05
+      EXT_CLIENT_MAX_CONNECTIONS: 100
+      EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS: 20
+      EXT_CLIENT_KEEPALIVE_EXPIRY: 5
+      EXT_CLIENT_HTTP2_ENABLED: "true"
     volumes:
       - ./:/app      
     ports:
@@ -55,6 +64,9 @@ services:
     depends_on:
       - db
       - tempo
+    environment:
+      EXTERNAL_DELAY_MIN_SECONDS: 30
+      EXTERNAL_DELAY_MAX_SECONDS: 120
 
   postgres_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:latest
@@ -69,6 +81,11 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--enable-feature=remote-write-receiver"
+      - "--web.enable-remote-write-receiver"
+      - "--enable-feature=native-histograms"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:

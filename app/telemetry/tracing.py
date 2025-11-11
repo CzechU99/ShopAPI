@@ -1,11 +1,15 @@
 from opentelemetry import trace
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter, SimpleSpanProcessor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
 
 def setup_tracing(app, service_name: str = "main_api"):
     resource = Resource(attributes={"service.name": service_name})
@@ -17,3 +21,4 @@ def setup_tracing(app, service_name: str = "main_api"):
 
     FastAPIInstrumentor.instrument_app(app)
     RequestsInstrumentor().instrument()
+    HTTPXClientInstrumentor().instrument()
