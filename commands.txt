@@ -1,0 +1,23 @@
+sudo apt update
+
+sudo apt install gnupg2 ca-certificates
+
+curl https://repo.k6.io/key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings k6-archive-keyring.gpg >/dev/null
+
+echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://repo.k6.io/apt stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+
+sudo apt update && sudo apt install k6
+
+sudo snap install k6
+
+cd /mnt/d/Desktop/ShopAPI
+
+export K6_PROMETHEUS_RW_SERVER_URL="http://localhost:9090/api/v1/write"
+export K6_PROMETHEUS_RW_TREND_STATS="p(95),p(99),min,max"
+export K6_TEST_ID="lab4-$(date +%s)"
+export K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM="true"   
+
+K6_CASE="baseline" \
+k6 run -o experimental-prometheus-rw --tag testid="$K6_TEST_ID" tests/k6/lab4.js
+
+DASHBOARD: 18030
