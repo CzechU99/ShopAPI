@@ -2,6 +2,8 @@ import json
 import logging
 from datetime import datetime, timezone
 
+from opentelemetry import trace
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -47,5 +49,23 @@ def setup_json_logging(service_name: str) -> None:
                 record.service = service_name
             return True
 
+    class TraceContextFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            # Do not overwrite explicit values set via `extra`
+            has_trace = getattr(record, "trace_id", None)
+            has_span = getattr(record, "span_id", None)
+            if has_trace and has_span:
+                return True
+
+            span = trace.get_current_span()
+            ctx = span.get_span_context() if span else None
+            if ctx and ctx.is_valid:
+                if not has_trace:
+                    record.trace_id = format(ctx.trace_id, "032x")
+                if not has_span:
+                    record.span_id = format(ctx.span_id, "016x")
+            return True
+
     root.addFilter(ServiceFilter())
+    root.addFilter(TraceContextFilter())
 

@@ -30,6 +30,7 @@ services:
     environment:
       DATABASE_URL: postgresql://shop:shop@db:5432/shopdb
       EXTERNAL_SERVICE_URL: http://external_service:8001
+      EXTERNAL_SERVICE_HTTP2_URL: https://external_service:8443
       EXT_CLIENT_CONNECT_TIMEOUT: 2
       EXT_CLIENT_READ_TIMEOUT: 180
       EXT_CLIENT_WRITE_TIMEOUT: 5
@@ -37,7 +38,8 @@ services:
       EXT_CLIENT_MAX_CONNECTIONS: 100
       EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS: 20
       EXT_CLIENT_KEEPALIVE_EXPIRY: 5
-      EXT_CLIENT_HTTP2_ENABLED: "true"
+      EXT_CLIENT_HTTP2_ENABLED: "false"
+      EXT_CLIENT_CA_CERT: /app/certs/local_ca.crt
     volumes:
       - ./:/app      
     ports:
@@ -61,6 +63,7 @@ services:
     container_name: external_service
     ports:
       - "8001:8001"
+      - "8443:8443"
     depends_on:
       - db
       - tempo

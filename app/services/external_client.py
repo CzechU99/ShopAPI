@@ -1,6 +1,7 @@
 # app/services/external_client.py
+import asyncio
 import logging
-from threading import Lock
+from pathlib import Path
 from typing import Optional
 
 import httpx
@@ -15,13 +16,32 @@ EXT_SERVICE_FAILURES = Counter(
     "ext_service_failures_total", "Number of external service call failures"
 )
 
-_client_lock = Lock()
-_http_client: Optional[httpx.Client] = None
+_client_lock: Optional[asyncio.Lock] = None
+_http_client: Optional[httpx.AsyncClient] = None
 
 EXTERNAL_PATH = "/external/data"
 
 
-def _build_http_client() -> httpx.Client:
+def _resolve_base_url() -> str:
+    if settings.EXT_CLIENT_HTTP2_ENABLED:
+        return settings.EXTERNAL_SERVICE_HTTP2_URL
+    return settings.EXTERNAL_SERVICE_URL
+
+
+def _resolve_verify_param(base_url: str):
+    if not base_url.startswith("https://"):
+        return True
+
+    ca_path = settings.EXT_CLIENT_CA_CERT
+    if ca_path:
+        path = Path(ca_path)
+        if path.exists():
+            return str(path)
+        logger.warning("EXT_CLIENT_CA_CERT=%s does not exist", ca_path)
+    return False
+
+
+def _build_http_client() -> httpx.AsyncClient:
     limits = httpx.Limits(
         max_connections=settings.EXT_CLIENT_MAX_CONNECTIONS,
         max_keepalive_connections=settings.EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS,
@@ -35,25 +55,34 @@ def _build_http_client() -> httpx.Client:
         pool=settings.EXT_CLIENT_POOL_TIMEOUT,
     )
 
-    return httpx.Client(
-        base_url=settings.EXTERNAL_SERVICE_URL,
+    base_url = _resolve_base_url()
+    verify = _resolve_verify_param(base_url)
+
+    return httpx.AsyncClient(
+        base_url=base_url,
         timeout=timeout,
         limits=limits,
+        verify=verify,
         http2=settings.EXT_CLIENT_HTTP2_ENABLED,
     )
 
 
-def _get_http_client() -> httpx.Client:
-    global _http_client
-    if _http_client is None:
-        with _client_lock:
-            if _http_client is None:
-                _http_client = _build_http_client()
+async def _get_http_client() -> httpx.AsyncClient:
+    global _http_client, _client_lock
+    if _http_client is not None:
+        return _http_client
+
+    if _client_lock is None:
+        _client_lock = asyncio.Lock()
+
+    async with _client_lock:
+        if _http_client is None:
+            _http_client = _build_http_client()
     return _http_client
 
 
-def call_external_service(correlation_id: Optional[str] = None) -> dict:
-    client = _get_http_client()
+async def call_external_service(correlation_id: Optional[str] = None) -> dict:
+    client = await _get_http_client()
     headers = {}
     if correlation_id:
         headers["X-Correlation-Id"] = correlation_id
@@ -62,7 +91,7 @@ def call_external_service(correlation_id: Optional[str] = None) -> dict:
     inject(headers)
 
     try:
-        response = client.get(EXTERNAL_PATH, headers=headers)
+        response = await client.get(EXTERNAL_PATH, headers=headers)
         response.raise_for_status()
         logger.info(
             "external_client: call success",

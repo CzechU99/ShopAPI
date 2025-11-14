@@ -1,5 +1,7 @@
 fastapi
 uvicorn[standard]
+hypercorn
+h2
 opentelemetry-api
 opentelemetry-sdk
 opentelemetry-exporter-otlp

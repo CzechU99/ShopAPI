@@ -1,0 +1,11 @@
+.venv
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+alembic/versions/*.pyc
+docker-compose.override.yml
+*.log
+node_modules/
+env/
+.env

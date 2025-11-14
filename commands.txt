@@ -20,4 +20,9 @@ export K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM="true"
 K6_CASE="baseline" \
 k6 run -o experimental-prometheus-rw --tag testid="$K6_TEST_ID" tests/k6/lab4.js
 
-DASHBOARD: 18030
+DASHBOARD PROMETHEUS: 18030
+DASHBOARD POSTGRE_EXPORTER: 12485
+
+{container=~"external_service|shopapi-app-1"}
+| json
+| __error__=""
