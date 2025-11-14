@@ -2,7 +2,8 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 const BASE_URL = __ENV.MAIN_API_URL || 'http://localhost:8000';
-const TARGET_ROUTE = __ENV.MAIN_API_ROUTE || '/api/v1/external/proxy';
+// const TARGET_ROUTE = __ENV.MAIN_API_ROUTE || '/api/v1/external/proxy';
+const TARGET_ROUTE = __ENV.MAIN_API_ROUTE || '/api/v1/users/?skip=0&limit=50';
 const SLEEP_BETWEEN_ITERS = Number(__ENV.K6_ITER_SLEEP || 0);
 const REQUEST_TIMEOUT_MS = Number(__ENV.K6_HTTP_TIMEOUT || 190000);
 const CASE_TAG = __ENV.K6_CASE || 'baseline';

@@ -11,7 +11,65 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    
+
+  # db:
+  #   image: postgres:15
+  #   environment:
+  #     POSTGRES_USER: shop
+  #     POSTGRES_PASSWORD: shop
+  #     POSTGRES_DB: shopdb
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - db_data:/var/lib/postgresql/data
+  #   command:
+  #     - "postgres"
+  #     - "-c"
+  #     - "shared_buffers=2MB"
+  #     - "-c"
+  #     - "autovacuum_vacuum_insert_threshold=1"
+  #     - "-c"
+  #     - "autovacuum_vacuum_threshold=0"
+  #     - "-c"
+  #     - "autovacuum_vacuum_scale_factor=0"
+  #     - "-c"
+  #     - "autovacuum_naptime=1"
+  #     - "-c"
+  #     - "vacuum_cost_limit=10000"
+  #     - "-c"
+  #     - "vacuum_cost_page_dirty=0"
+  #     - "-c"
+  #     - "vacuum_cost_page_hit=0"
+  #     - "-c"
+  #     - "vacuum_cost_page_miss=0"
+  #     - "-c"
+  #     - "autovacuum_analyze_threshold=0"
+  #     - "-c"
+  #     - "autovacuum_analyze_scale_factor=0"
+  #     - "-c"
+  #     - "log_autovacuum_min_duration=0"
+  #     - "-c"
+  #     - "logging_collector=on"
+  #     - "-c"
+  #     - "log_destination=stderr"
+  #     - "-c"
+  #     - "random_page_cost=1000000"
+  #     - "-c"
+  #     - "cpu_index_tuple_cost=1000000"
+  #     - "-c"
+  #     - "effective_cache_size=1MB"
+  #     - "-c"
+  #     - "checkpoint_timeout=30s"
+  #     - "-c"
+  #     - "max_wal_size=32MB"
+  #     - "-c"
+  #     - "wal_writer_delay=1"
+  #     - "-c"
+  #     - "track_wal_io_timing=on"
+  #     - "-c"
+  #     - "log_statement=all"
+
+
   db_test:
     image: postgres:15
     environment:

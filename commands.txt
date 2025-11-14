@@ -21,7 +21,7 @@ K6_CASE="baseline" \
 k6 run -o experimental-prometheus-rw --tag testid="$K6_TEST_ID" tests/k6/lab4.js
 
 DASHBOARD PROMETHEUS: 18030
-DASHBOARD POSTGRE_EXPORTER: 12485
+DASHBOARD POSTGRE_EXPORTER: 9628
 
 {container=~"external_service|shopapi-app-1"}
 | json
