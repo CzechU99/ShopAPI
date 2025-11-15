@@ -14,14 +14,15 @@
     <img alt="Swagger" src="https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black">
     <img alt="Docker" src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white">
     <img alt="Postman" src="https://img.shields.io/badge/Postman-FF6C37?logo=postman&logoColor=white">
-    <img alt="Pytest" src="https://img.shields.io/badge/Tests-pytest-5A63F0?logo=pytest&logoColor=white">
-    <br>
+    <img alt="Pytest" src="https://img.shields.io/badge/Tests-Pytest-5A63F0?logo=pytest&logoColor=white">
+    </br>
     <img alt="OpenTelemetry" src="https://img.shields.io/badge/OpenTelemetry-000000?logo=opentelemetry&logoColor=white">
+    <img alt="Load Testing" src="https://img.shields.io/badge/Load_Testing-black?logo=speedtest&logoColor=white">
     <img alt="Grafana" src="https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white">
     <img alt="Prometheus" src="https://img.shields.io/badge/Prometheus-E6522C?logo=prometheus&logoColor=white">
     <img alt="Loki" src="https://img.shields.io/badge/Loki-4A90E2?logo=grafana&logoColor=white">
     <img alt="Tempo" src="https://img.shields.io/badge/Tempo-1F60C4?logo=grafana&logoColor=white">
-    <img alt="Promtail" src="https://img.shields.io/badge/Promtail-7D64FF?logo=grafana&logoColor=white">
+    <img alt="k6" src="https://img.shields.io/badge/Grafana k6-7D64FF?logo=k6&logoColor=white">
   </p>
 </div>
 
@@ -43,20 +44,6 @@ Projekt jest produkcjonopodobnym **REST API sklepu internetowego** w architektur
 - Walidację danych wejściowych i obsługę błędów HTTP  
 - Wersjonowanie API (np. `/api/v1/...`)  
 
-#### ETAP II:
-- Integrację testów jednostkowych i integracyjnych z rzeczywistą bazą PostgreSQL (Docker)
-- Testy integracyjne z izolowaną bazą testową, rollback lub czyszczenie po każdym teście 
-
-#### ETAP III:
-- Dodanie drugiej usługi HTTP (**External Service**) i wywołanie jej z głównego API w normalnym przepływie (`/api/v1/external/proxy`).
-- Pełna obserwowalność: **OpenTelemetry** (traces/metrics/logs) + **Grafana + Tempo + Loki + Prometheus**.
-- **Correlation ID**: generowany dla każdego żądania w `app`, propagowany do `external_service` (nagłówek `X-Correlation-Id`) i zwracany w odpowiedzi; obecny w logach.
-- Tracing: spany serwerowe FastAPI i klienckie (Requests) z propagacją kontekstu między usługami.
-- Metryki: standardowe HTTP + histogramy opóźnień DB (`db_query_duration_seconds`), licznik błędów zewnętrznej usługi (`ext_service_failures_total`).
-- Logi: JSON z polami `timestamp, level, message, trace_id, span_id, correlation_id, http.method, http.route, http.status` wysyłane do **Loki** (Promtail).
-
-<br>
-
 Obsługuje następujące encje:
 - **Users** – użytkownicy systemu  
 - **Products** – produkty w sklepie  
@@ -67,7 +54,32 @@ Obsługuje następujące encje:
 
 <br>
 
-Projekt jest w fazie **rozwojowej** i będzie stopniowo rozbudowywany o kolejne funkcjonalności.
+#### ETAP II:
+- Integrację testów jednostkowych i integracyjnych z rzeczywistą bazą PostgreSQL (Docker)
+- Testy integracyjne z izolowaną bazą testową, rollback lub czyszczenie po każdym teście 
+
+<br>
+
+#### ETAP III:
+- Dodanie drugiej usługi HTTP (**External Service**) i wywołanie jej z głównego API w normalnym przepływie (`/api/v1/external/proxy`).
+- Pełna obserwowalność **OpenTelemetry** (traces/metrics/logs) + **Grafana + Tempo + Loki + Prometheus**.
+- **Correlation ID** generowany dla każdego żądania w `app`, propagowany do `external_service` i zwracany w odpowiedzi.
+- Spany serwerowe FastAPI i klienckie (Requests) z propagacją kontekstu między usługami.
+- Standardowe HTTP + histogramy opóźnień DB (`db_query_duration_seconds`), licznik błędów zewnętrznej usługi (`ext_service_failures_total`).
+- JSON z polami `timestamp, level, message, trace_id, span_id, correlation_id, http.method, http.route, http.status` wysyłane do **Loki** (Promtail).
+
+<br>
+
+#### ETAP IV:
+Celem etapu było wykonanie serii testów obciążeniowych badających:
+- Opóźnienia po stronie usługi zewnętrznej  
+- Timeouty klienta HTTP  
+- Presję na pulę połączeń (max_connections + pool_timeout)  
+- Keep-alive i jego wpływ na reuse połączeń  
+- HTTP/1.1 vs HTTP/2  
+- Wolną bazę danych (spowolniona konfiguracją + dużymi danymi)  
+
+Testy wykonywane poprzez **Grafana k6 z Prometheus Remote Write**, aby pojawiały się w Grafanie jako serie metryk `k6_*`.
 
 ---
 
@@ -81,13 +93,13 @@ Projekt jest w fazie **rozwojowej** i będzie stopniowo rozbudowywany o kolejne 
 - **Swagger UI** – dokumentacja i testowanie API  
 - **Postman** – testy i kolekcje API  
 - **Docker** – konteneryzacja aplikacji i bazy danych  
-- **pytest / unittest / testcontainers** – testy jednostkowe i integracyjne  
+- **Pytest / Unittest / Testcontainers** – testy jednostkowe i integracyjne  
 - **OpenTelemetry** – śledzenie, metryki i logi  
 - **Grafana** – wizualizacja (dashboardy, Explore)  
 - **Tempo** – magazyn trace’ów  
 - **Loki + Promtail** – zbieranie i przegląd logów  
 - **Prometheus** – metryki aplikacji i bazy  
-- **postgres_exporter** – metryki PostgreSQL  
+- **Postgres_exporter** – metryki PostgreSQL  
 
 ---
 
@@ -111,75 +123,16 @@ c) W kontenerze `app`, aby wgrać migrację bazy danych:
 <br>
 
 Po chwili:
-- API/SWAGGER UI: localhost:8000/docs
-- DB: localhost:5432 (user: shop | pass: shop | db: shopdb)
-- PGADMIN: localhost:8080 (email: admin@admin.com | pass: admin)
+- MAIN API: localhost:8000
+- SWAGGER UI: localhost:8000/docs
+- DATABASE: localhost:5432 (user: shop | pass: shop | db: shopdb)
+- POSTGRESQL ADMIN: localhost:8080 (email: admin@admin.com | pass: admin)
 - DB_TEST: localhost:5433 (user: testshop | pass: testshop | db: testshopdb)
-- External Service: localhost:8001
-- Prometheus: localhost:9090
-- Grafana: localhost:3000 (login: admin / hasło: admin — domyślnie)
-- Tempo UI/API: localhost:3200
-- Loki API: localhost:3100
-
----
-
-## 🔭 Observability
-
-- Traces: eksport przez OTLP HTTP do `tempo:4318` (Tempo), spany FastAPI (serwer) i Requests (klient).  
-- Metrics: `/metrics` w `app` i `external_service` (Prometheus FastAPI Instrumentator); histogramy DB i licznik błędów zewnętrznej usługi.  
-- Logs: JSON do stdout + Promtail → Loki; pola korelacyjne (`trace_id`, `span_id`, `correlation_id`) w każdym logu żądania.  
-- Grafana: gotowy dashboard „Shop API Observability”.  
-
-#### Szybki start (Grafana → Explore)
-- Prometheus: wybierz datasource `Prometheus`, wpisz np. `sum(rate(http_requests_total[5m])) by (code, method)`.
-- Loki: wybierz `Loki`, filtruj `{container="app"}` i zawężaj po `correlation_id` lub `level`.
-- Tempo: wybierz `Tempo`, filtruj `service.name = "main_api"` lub `"external_service"` i przeglądaj trace’y.
-
-Wskazówka: aby kliknąć z logu do konkretnego trace’a, w Grafana → Data sources → Loki dodaj „Derived field”:  
-Name: `trace_id`, Regex: `"trace_id"\s*:\s*"([a-f0-9]{32})"`, Data source: `Tempo`.
-
----
-
-## 📈 Load Testing (Grafana k6 – Lab 4)
-
-1. **Start the full stack** with `docker compose up --build`. The `external_service` now injects a random delay between **30–120s** (tunable via `EXTERNAL_DELAY_MIN_SECONDS` / `EXTERNAL_DELAY_MAX_SECONDS`).
-2. **Tune the outbound HTTP client** in the main API via environment variables (examples below) before restarting the `app` container:
-
-| Variable | Description | Default |
-| --- | --- | --- |
-| `EXT_CLIENT_READ_TIMEOUT` | Read/response timeout in seconds | `180` |
-| `EXT_CLIENT_CONNECT_TIMEOUT` | TCP connect timeout | `2` |
-| `EXT_CLIENT_WRITE_TIMEOUT` | Body upload timeout | `5` |
-| `EXT_CLIENT_POOL_TIMEOUT` | Wait time for a free pooled connection (s) | `0.05` |
-| `EXT_CLIENT_MAX_CONNECTIONS` | Total HTTP connections allowed by httpx | `100` |
-| `EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS` | Keep-alive pool size | `20` |
-| `EXT_CLIENT_KEEPALIVE_EXPIRY` | Idle time before closing keep-alive sockets (s) | `5` |
-| `EXT_CLIENT_HTTP2_ENABLED` | Toggle HTTP/2 (`true` / `false`) | `true` |
-
-3. **Run k6 with Prometheus Remote Write** so every experiment shows up in Grafana:
-
-```bash
-export K6_PROMETHEUS_RW_SERVER_URL="http://localhost:9090/api/v1/write"
-export K6_PROMETHEUS_RW_TREND_STATS="p(95),p(99),min,max"
-export K6_TEST_ID="lab4-$(date +%s)"
-
-K6_CASE="maxconn-100-pool-100ms" \
-K6_RATE=25 \
-K6_DURATION=5m \
-K6_PRE_ALLOCATED_VUS=50 \
-K6_MAX_VUS=500 \
-K6_EXECUTOR=constant-arrival-rate \
-K6_HTTP_TIMEOUT=190000 \
-K6_ITER_SLEEP=0 \
-K6_TEST_ID="$K6_TEST_ID" \
-k6 run -o experimental-prometheus-rw --tag testid="$K6_TEST_ID" tests/k6/lab4.js
-```
-
-Use the `K6_CASE` tag (e.g., `maxconn-10-pool-0ms`, `keepalive-50`, `http1`) to distinguish runs in Prometheus/Grafana and copy the tag into screenshot filenames.
-
-4. **Dashboard evidence** – drop screenshots for every experiment under `docs/load-tests/` using the filenames from the assignment (see `docs/load-tests/README.md`). Keep the short narrative in `docs/load-tests/REPORT.md` updated with latency/error-rate findings and the PromQL queries you used.
-
-5. **Slow PostgreSQL experiment** – adjust the `db` container settings (e.g., via `ALTER SYSTEM` or a custom config file) to mimic the “Making Postgres 42000x slower” techniques, then re-run the same k6 scenario and capture the increased latency in Grafana.
+- EXTERNAL API: localhost:8001
+- PROMETHEUS: localhost:9090
+- GRAFANA: localhost:3000 (login: admin / hasło: admin)
+- TEMPO: localhost:3200
+- LOKI API: localhost:3100
 
 ---
 
@@ -205,6 +158,78 @@ a) Pamiętaj o uruchomieniu kontenera z bazą danych do testów `db_test`
 b) Wykonanie testów za pomocą polecenia:
 ```env
 docker compose exec app pytest -v
+```
+
+---
+
+## 🔭 Observability
+
+- Traces: eksport przez OTLP HTTP do `tempo:4318` (Tempo), spany FastAPI (serwer) i Requests (klient).  
+- Metrics: `/metrics` w `app` i `external_service` (Prometheus FastAPI Instrumentator); histogramy DB i licznik błędów zewnętrznej usługi.  
+- Logs: JSON + Promtail → Loki; pola korelacyjne (`trace_id`, `span_id`, `correlation_id`) w każdym logu żądania.  
+- Grafana: gotowy dashboard „Shop API Observability”.
+
+<br>
+
+#### Grafana → Explore/Dashboard
+- ID gotowych dashboard'ów do importu: PROMETHEUS:18030 | POSTGRES_EXPORTER:9628
+- Prometheus: wybierz datasource `Prometheus`, wpisz np. `sum(rate(http_requests_total))`.
+- Loki: wybierz `Loki`, filtruj `{container="shop-app-1"}` i zawężaj po `correlation_id` lub `level`.
+- Tempo: wybierz `Tempo`, filtruj `service.name = "main_api"` lub `"external_service"` i przeglądaj trace’y.
+
+---
+
+## 📈 Load Testing (Grafana K6)
+
+#### 🌐 Konfigruacja klienta HTTP:
+
+| Zmienna | Opis | Domyślna wartość |
+| --- | --- | --- |
+| `EXT_CLIENT_READ_TIMEOUT` | Timeout na odczyt/odpowiedź (w sekundach) | `180` |
+| `EXT_CLIENT_CONNECT_TIMEOUT` | Timeout na ustanowienie połączenia TCP | `2` |
+| `EXT_CLIENT_WRITE_TIMEOUT` | Timeout na wysłanie danych (body upload) | `5` |
+| `EXT_CLIENT_POOL_TIMEOUT` | Maksymalny czas oczekiwania na wolne połączenie z puli (s) | `0.05` |
+| `EXT_CLIENT_MAX_CONNECTIONS` | Maksymalna liczba jednoczesnych połączeń HTTP (httpx) | `100` |
+| `EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS` | Rozmiar puli keep-alive | `20` |
+| `EXT_CLIENT_KEEPALIVE_EXPIRY` | Maksymalny czas bezczynności połączenia keep-alive (s) | `5` |
+| `EXT_CLIENT_HTTP2_ENABLED` | Włączenie/wyłączenie HTTP/2 (`true` / `false`) | `true` |
+
+<br>
+
+#### 🚀 Uruchamianie testów:
+```bash
+export K6_PROMETHEUS_RW_SERVER_URL="http://localhost:9090/api/v1/write"
+export K6_PROMETHEUS_RW_TREND_STATS="p(95),p(99),min,max"
+export K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM="true"   
+
+K6_CASE="case_name" k6 run -o experimental-prometheus-rw --tag testid="test_id_name" tests/k6/lab4.js
+```
+<br>
+
+#### 🔎 Analiza wyników:
+- `k6_http_req_duration{p95,p99}`  
+- `k6_http_req_failed`  
+- Tempo traces  
+- Logi Loki z korelacją `correlation_id`  
+- postgres_exporter:
+  - `pg_stat_activity_count`
+  - `blks_read_total`
+  - `buffers_hit_ratio`
+
+<br>
+
+#### 🗂️ Wyniki i screeny:
+Wszystkie dashboardy, wykresy i logi zostały zebrane w:
+```bash
+docs/load-tests/
+```
+
+<br>
+
+#### 📝 Raport końcowy:
+Pełny raport znajduje się w:
+```
+docs/load-tests/REPORT.md
 ```
 
 ---
