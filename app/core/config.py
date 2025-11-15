@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     EXT_CLIENT_MAX_CONNECTIONS: int = 100
     EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS: int = 20
     EXT_CLIENT_KEEPALIVE_EXPIRY: float = 5.0
-    EXT_CLIENT_HTTP2_ENABLED: bool = False
+    EXT_CLIENT_HTTP2_ENABLED: bool = True
     EXT_CLIENT_CA_CERT: str | None = "/app/certs/local_ca.crt"
 
     model_config = ConfigDict(env_file=".env")

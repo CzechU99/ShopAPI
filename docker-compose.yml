@@ -68,6 +68,8 @@ services:
   #     - "track_wal_io_timing=on"
   #     - "-c"
   #     - "log_statement=all"
+  #     - "-c"
+  #     - "max_parallel_workers_per_gather=0"
 
 
   db_test:
@@ -96,7 +98,7 @@ services:
       EXT_CLIENT_MAX_CONNECTIONS: 100
       EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS: 20
       EXT_CLIENT_KEEPALIVE_EXPIRY: 5
-      EXT_CLIENT_HTTP2_ENABLED: "false"
+      EXT_CLIENT_HTTP2_ENABLED: "true"
       EXT_CLIENT_CA_CERT: /app/certs/local_ca.crt
     volumes:
       - ./:/app      
@@ -126,8 +128,8 @@ services:
       - db
       - tempo
     environment:
-      EXTERNAL_DELAY_MIN_SECONDS: 30
-      EXTERNAL_DELAY_MAX_SECONDS: 120
+      EXTERNAL_DELAY_MIN_SECONDS: 0
+      EXTERNAL_DELAY_MAX_SECONDS: 0
 
   postgres_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:latest

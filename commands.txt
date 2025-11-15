@@ -26,3 +26,13 @@ DASHBOARD POSTGRE_EXPORTER: 9628
 {container=~"external_service|shopapi-app-1"}
 | json
 | __error__=""
+
+
+INSERT INTO users (email, full_name, hashed_password, is_active)
+SELECT
+    'user' || i || '@example.com' AS email,
+    'User ' || i AS full_name,
+    'stringst' AS hashed_password,
+    TRUE AS is_active
+FROM generate_series(1, 500000) AS s(i);
+
