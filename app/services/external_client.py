@@ -1,7 +1,6 @@
 # app/services/external_client.py
 import asyncio
 import logging
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
@@ -10,6 +9,7 @@ from opentelemetry.propagate import inject
 from prometheus_client import Counter
 
 from app.core.config import settings
+from app.services.external_models import ExternalServiceResponse
 
 logger = logging.getLogger("app.external_client")
 
@@ -20,23 +20,16 @@ EXT_SERVICE_FAILURES = Counter(
 _client_lock: Optional[asyncio.Lock] = None
 _http_client: Optional[httpx.AsyncClient] = None
 
-
-@dataclass
-class ExternalServiceResponse:
-    status_code: int
-    body: dict[str, Any]
-    elapsed_ms: int
-
 EXTERNAL_PATH = "/external/data"
 
 
-def _resolve_base_url() -> str:
+def resolve_base_url() -> str:
     if settings.EXT_CLIENT_HTTP2_ENABLED:
         return settings.EXTERNAL_SERVICE_HTTP2_URL
     return settings.EXTERNAL_SERVICE_URL
 
 
-def _resolve_verify_param(base_url: str):
+def resolve_verify_param(base_url: str):
     if not base_url.startswith("https://"):
         return True
 
@@ -63,8 +56,8 @@ def _build_http_client() -> httpx.AsyncClient:
         pool=settings.EXT_CLIENT_POOL_TIMEOUT,
     )
 
-    base_url = _resolve_base_url()
-    verify = _resolve_verify_param(base_url)
+    base_url = resolve_base_url()
+    verify = resolve_verify_param(base_url)
 
     return httpx.AsyncClient(
         base_url=base_url,

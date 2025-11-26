@@ -9,3 +9,4 @@ opentelemetry-instrumentation-fastapi
 opentelemetry-instrumentation-requests
 opentelemetry-instrumentation-logging
 prometheus-fastapi-instrumentator
+httpx

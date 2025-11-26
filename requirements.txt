@@ -27,3 +27,5 @@ opentelemetry-instrumentation-logging
 opentelemetry-instrumentation-httpx
 httpx[http2]
 prometheus-fastapi-instrumentator
+kafka-python
+pika

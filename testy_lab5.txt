@@ -1,0 +1,73 @@
+Testy wymagane przez zadanie
+
+Baseline (Lab 4) – scenariusz bez kolejki
+
+Upewnij się, że external service ma opóźnienia ustawione na 30–120 s (EXTERNAL_DELAY_MIN_SECONDS=30, MAX=120).
+Worker nie jest potrzebny.
+Uruchom:
+K6_SCENARIO=baseline \
+K6_BROKER=none \
+K6_CASE="lab5-baseline" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+(alternatywnie użyj tests/k6/lab4.js, jeśli chcesz zachować identyczny scenariusz).
+Zbierz metryki RPS i latencję z Grafana (dashboard k6, np. z PromQL k6_http_req_duration). Zrób screenshot baseline-grafana.png oraz ewentualnie Loki/Tempo dla korelacji.
+Scenario A – Async Upstream (broker: Kafka)
+
+Uruchom worker w trybie upstream na Kafka (domyślna konfiguracja profilu worker).
+External service może mieć opóźnienia 0–120 s zależnie od tego, co chcesz badać; w Lab 5 usunięcie sztucznego sleepa jest zalecane, więc ustaw EXTERNAL_DELAY_MIN_SECONDS=0, MAX=0.
+Wykonaj:
+K6_SCENARIO=async_upstream \
+K6_BROKER=kafka \
+K6_CASE="lab5-upstream-kafka" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+Zapisz screenshot z Grafany (async-upstream-kafka.png) i jeden z Loki+Tempo pokazujący log w API oraz odpowiadający trace w workerze (szukaj correlation_id). Zanotuj p50/p95/p99.
+Scenario A – Async Upstream (broker: RabbitMQ)
+
+Zatrzymaj poprzedniego workera (Ctrl+C w terminalu).
+Uruchom nowego:
+MESSAGE_BROKER=rabbitmq JOB_SCENARIO=async_upstream \
+  docker compose run --rm worker python worker/main.py
+(albo docker compose --profile worker up worker po zmodyfikowaniu zmiennych w compose).
+Uruchom k6:
+K6_SCENARIO=async_upstream \
+K6_BROKER=rabbitmq \
+K6_CASE="lab5-upstream-rabbitmq" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+Zapisz metryki i screenshot async-upstream-rabbitmq.png.
+Scenario B – Async Downstream (broker: Kafka)
+
+Uruchom worker:
+MESSAGE_BROKER=kafka JOB_SCENARIO=async_downstream \
+  docker compose run --rm worker python worker/main.py
+k6:
+K6_SCENARIO=async_downstream \
+K6_BROKER=kafka \
+K6_CASE="lab5-downstream-kafka" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+Zbierz metryki i screenshot async-downstream-kafka.png.
+Scenario B – Async Downstream (broker: RabbitMQ)
+
+Worker:
+MESSAGE_BROKER=rabbitmq JOB_SCENARIO=async_downstream \
+  docker compose run --rm worker python worker/main.py
+k6:
+K6_SCENARIO=async_downstream \
+K6_BROKER=rabbitmq \
+K6_CASE="lab5-downstream-rabbitmq" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+Zbierasz metryki i screenshot async-downstream-rabbitmq.png.
+Po każdym biegu
+
+Sprawdź w Postgresie, czy tabeli external_call_results przybywa wpisów (np. docker compose exec db psql -U shop -d shopdb -c "SELECT * FROM external_call_results ORDER BY id DESC LIMIT 5;").
+W Loki wyszukaj logi z correlation_id, w Tempo odfiltruj trace service.name = "main_api" i "external-worker" (lub analogiczną nazwę), dowód powiązania zachowaj jako jeden screenshot.
+Zapisz maksymalny RPS, p50/p95/p99 latencji w docs/messaging-load-tests/RESULTS.md.
+Po wszystkich biegach
+
+Uzupełnij tabelę w docs/messaging-load-tests/RESULTS.md.
+Wrzóć zrzuty ekranu do docs/messaging-load-tests/ z nazwami zgodnymi z wymaganiami (baseline-grafana.png, async-upstream-kafka.png, ... itd.) + dodatkowy screenshot z Loki/Tempo (np. async-upstream-kafka-loki-tempo.png).
+W README/LAB-raporcie dopisz krótką analizę – które scenariusze osiągnęły najwyższy RPS, jak wypada latencja względem baseline oraz różnice między Kafka a RabbitMQ.
+Reset między biegami
+
+Jeśli musisz wyczyścić kolejki/tematy, zatrzymaj workera i, gdy trzeba, usuń dane Kafki/RabbitMQ (np. docker compose down -v kafka rabbitmq jeśli chcesz zaczynać od czystych topiców).
+Pamiętaj, by za każdym razem startować tylko jednego workera, żeby nie konsumować tych samych wiadomości dwukrotnie.
+W razie problemów przy starcie brokerów (np. replikacja, brak obrazu) skorzystaj z wcześniejszych instrukcji (obrazy Confluent, ustawienia replikacji, itp.).

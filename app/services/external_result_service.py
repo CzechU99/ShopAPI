@@ -16,7 +16,7 @@ class ExternalResultService:
         response_time_ms: int,
         status_code: Optional[int] = None,
         payload: Optional[dict[str, Any]] = None,
-        sleep_seconds: Optional[int] = None,
+        remote_latency_ms: Optional[int] = None,
         error_message: Optional[str] = None,
     ) -> ExternalCallResult:
         record = ExternalCallResult(
@@ -25,7 +25,7 @@ class ExternalResultService:
             success=success,
             response_time_ms=response_time_ms,
             payload=payload,
-            sleep_seconds=sleep_seconds,
+            sleep_seconds=remote_latency_ms,
             error_message=error_message,
         )
         self.db.add(record)
@@ -40,7 +40,7 @@ class ExternalResultService:
         status_code: int,
         response_time_ms: int,
         payload: dict[str, Any],
-        sleep_seconds: Optional[int],
+        remote_latency_ms: Optional[int],
     ) -> ExternalCallResult:
         return self._create_record(
             correlation_id=correlation_id,
@@ -48,7 +48,7 @@ class ExternalResultService:
             status_code=status_code,
             response_time_ms=response_time_ms,
             payload=payload,
-            sleep_seconds=sleep_seconds,
+            remote_latency_ms=remote_latency_ms,
         )
 
     def record_failure(
@@ -65,6 +65,6 @@ class ExternalResultService:
             status_code=status_code,
             response_time_ms=response_time_ms,
             payload=None,
-            sleep_seconds=None,
+            remote_latency_ms=None,
             error_message=error_message[:255],
         )

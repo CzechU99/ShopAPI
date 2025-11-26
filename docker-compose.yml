@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:15
@@ -11,6 +9,40 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 
   # db:
   #   image: postgres:15
@@ -87,6 +119,8 @@ services:
     depends_on:
       - db
       - tempo
+      - kafka
+      - rabbitmq
     environment:
       DATABASE_URL: postgresql://shop:shop@db:5432/shopdb
       EXTERNAL_SERVICE_URL: http://external_service:8001
@@ -100,6 +134,13 @@ services:
       EXT_CLIENT_KEEPALIVE_EXPIRY: 5
       EXT_CLIENT_HTTP2_ENABLED: "false"
       EXT_CLIENT_CA_CERT: /app/certs/local_ca.crt
+      MESSAGE_BROKER_DEFAULT: kafka
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_ASYNC_UPSTREAM_TOPIC: external_async_upstream
+      KAFKA_ASYNC_DOWNSTREAM_TOPIC: external_async_downstream
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      RABBITMQ_ASYNC_UPSTREAM_QUEUE: external_async_upstream
+      RABBITMQ_ASYNC_DOWNSTREAM_QUEUE: external_async_downstream
     volumes:
       - ./:/app      
     ports:
@@ -128,8 +169,9 @@ services:
       - db
       - tempo
     environment:
-      EXTERNAL_DELAY_MIN_SECONDS: 30
-      EXTERNAL_DELAY_MAX_SECONDS: 120
+      EXTERNAL_REMOTE_SOURCE: https://jsonplaceholder.typicode.com/posts/{id}
+      EXTERNAL_DELAY_MIN_SECONDS: 0
+      EXTERNAL_DELAY_MAX_SECONDS: 0
 
   postgres_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:latest
@@ -196,6 +238,21 @@ services:
     volumes:
       - ./monitoring/provisioning:/etc/grafana/provisioning
       - ./monitoring/dashboards:/etc/grafana/dashboards
+
+  worker:
+    build: .
+    depends_on:
+      - db
+      - kafka
+      - rabbitmq
+    environment:
+      DATABASE_URL: postgresql://shop:shop@db:5432/shopdb
+      EXTERNAL_SERVICE_URL: http://external_service:8001
+      EXTERNAL_SERVICE_HTTP2_URL: https://external_service:8443
+      MESSAGE_BROKER: kafka
+      JOB_SCENARIO: async_upstream
+    command: python worker/main.py
+    profiles: ["worker"]
 
 volumes:
   db_data:

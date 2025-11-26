@@ -234,4 +234,64 @@ docs/load-tests/REPORT.md
 
 ---
 
+## 📨 Lab 5 – Async Messaging Scenarios
+
+Lab 5 rozszerza architekturę z Lab 4 o dwa warianty komunikacji asynchronicznej:
+
+- **Scenario A / Async Upstream:** API tylko wrzuca komunikat do kolejki (Kafka lub RabbitMQ) i natychmiast zwraca `202 Accepted`. Worker pobiera wiadomość, wywołuje External API i zapisuje wynik w Postgresie.
+- **Scenario B / Async Downstream:** API nadal wykonuje połączenie HTTP do External API, ale zapis do bazy zleca poprzez kolejkę i worker.
+
+### Nowe komponenty
+
+- **Kafka + Zookeeper** – Bitnami images (`kafka:9092`), dwa topiki: `external_async_upstream`, `external_async_downstream`.
+- **RabbitMQ** – obraz `rabbitmq:3-management` (`5672`, `15672` UI), dwie kolejki o analogicznych nazwach.
+- **Worker (`worker/main.py`)** – współdzielony kod z aplikacją (SQLAlchemy + `ExternalResultService`). Uruchamiany z parametrami:
+  - `MESSAGE_BROKER={kafka|rabbitmq}`
+  - `JOB_SCENARIO={async_upstream|async_downstream}`
+- **External API bez sztucznego `sleep`** – serwis `external_service` pobiera teraz dane z publicznego API (`jsonplaceholder.typicode.com`) i zwraca realny czas pobrania w polu `remote_delay_ms`.
+
+Domyślna definicja w `docker-compose.yml` (profil `worker`) odpala worker w trybie `kafka + async_upstream`. Przykłady:
+
+```bash
+# Worker dla scenariusza A na Kafka
+docker compose --profile worker up worker
+
+# Worker dla scenariusza B na RabbitMQ
+MESSAGE_BROKER=rabbitmq JOB_SCENARIO=async_downstream \
+  docker compose run --rm worker python worker/main.py
+```
+
+### API endpoints
+
+| Endpoint | Opis |
+| --- | --- |
+| `GET /api/v1/external/proxy` | Baseline z Lab 4 (bez MQ). |
+| `POST /api/v1/external/fetch/async-upstream?broker={kafka|rabbitmq}` | Scenario A – zwraca `202` z `correlation_id`. |
+| `POST /api/v1/external/fetch/async-downstream?broker={kafka|rabbitmq}` | Scenario B – odpowiedź zawiera wynik External API, zapis do DB dzieje się asynchronicznie. |
+
+Każda ścieżka propaguje `X-Correlation-Id`, tagi scenariusza oraz dane do Prometheusa/Loki/Tempo.
+
+### k6 – nowe skrypty
+
+Plik `tests/k6/lab5.js` przyjmuje zmienne środowiskowe:
+
+```bash
+K6_SCENARIO=async_upstream \
+K6_BROKER=kafka \
+K6_CASE="lab5-upstream-kafka" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+```
+
+Obsługiwane scenariusze: `baseline`, `async_upstream`, `async_downstream`. Dla wariantów asynchronicznych ustaw `K6_BROKER` na `kafka` lub `rabbitmq`.
+
+### Dokumentacja i artefakty
+
+- `docs/messaging-load-tests/RESULTS.md` – tabela porównawcza (RPS, p50/p95/p99) dla 5 biegów: baseline, A/B z Kafka i RabbitMQ.
+- `docs/messaging-load-tests/*.png` – zrzuty z Grafany (k6 dashboard) oraz para Loki+Tempo z korelacją `correlation_id`.
+- README (ten rozdział) opisuje też jak przełączać brokera i scenariusze.
+
+Po uruchomieniu testów uzupełnij tabelę wyników oraz dodaj screeny zgodnie z wymaganiami labu.
+
+---
+
 > © 2025 Shop REST API – Projekt edukacyjny

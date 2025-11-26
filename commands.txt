@@ -41,8 +41,24 @@ mkdir -p ~/k6tests
 cp "/mnt/c/Users/Denis Czech/Desktop/ShopAPI/tests/k6/lab4.js" ~/k6tests/lab4.js
 cd ~/k6tests
 
+# Lab 5 helpers
+docker compose --profile worker up worker
+
+K6_SCENARIO="baseline" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+
+K6_SCENARIO="async_upstream" \
+K6_BROKER="kafka" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+
+K6_SCENARIO="async_downstream" \
+K6_BROKER="rabbitmq" \
+k6 run -o experimental-prometheus-rw tests/k6/lab5.js
+
 OPTIMUM:
 HTTP1.1
 MAX_CONN: 200
 MAX_KEEPALIVE: 20
 POOL_TIMEOUT: 1.0
+EXTERNAL API DELAY: 0
+
