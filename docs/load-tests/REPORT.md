@@ -68,6 +68,11 @@ Timeouty powinny być dobrane do spodziewanych opóźnień w komunikacji między
 - Optimum uzyskano przy `max_connections=200` i `pool_timeout=1s` — 100% skutecznych żądań.  
 - Wzrost puli połączeń poprawia throughput kosztem zużycia pamięci.
 
+**Docelowa konfiguracja klienta HTTP:** 
+- Na podstawie powyższej serii testów w `docker-compose.yml` zostało zapisane:
+`EXT_CLIENT_MAX_CONNECTIONS=200`, `EXT_CLIENT_POOL_TIMEOUT=1s`, `EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS=50`
+oraz `EXT_CLIENT_HTTP2_ENABLED=false`. Ten zestaw eliminuje saturację puli, pozwala na  wykorzystanie HTTP/1.1 i utrzymanie stabilnych czasów odpowiedzi przy wysokim obciążeniu (100% udanych żądań w scenariuszu D).
+
 **Screeny:**  
 `03-maxconn-10-pool-0s-*`, `03-maxconn-50-pool-0,1s-*`, `03-maxconn-100-pool-0,25s-*`, `03-maxconn-200-pool-1s-*`
 

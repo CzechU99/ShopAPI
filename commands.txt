@@ -40,3 +40,9 @@ FROM generate_series(1, 500000) AS s(i);
 mkdir -p ~/k6tests
 cp "/mnt/c/Users/Denis Czech/Desktop/ShopAPI/tests/k6/lab4.js" ~/k6tests/lab4.js
 cd ~/k6tests
+
+OPTIMUM:
+HTTP1.1
+MAX_CONN: 200
+MAX_KEEPALIVE: 20
+POOL_TIMEOUT: 1.0

@@ -1,6 +1,19 @@
 from sqlalchemy import (
-    Column, BigInteger, String, Text, Boolean, Numeric, Integer, ForeignKey,
-    TIMESTAMP, func, Table, CheckConstraint, Index, UniqueConstraint
+    Column,
+    BigInteger,
+    String,
+    Text,
+    Boolean,
+    Numeric,
+    Integer,
+    ForeignKey,
+    TIMESTAMP,
+    func,
+    Table,
+    CheckConstraint,
+    Index,
+    UniqueConstraint,
+    JSON,
 )
 from sqlalchemy.orm import relationship
 from app.db.base import Base 
@@ -109,3 +122,17 @@ class Review(Base):
         CheckConstraint("rating BETWEEN 1 AND 5", name="ck_review_rating_range"),
         UniqueConstraint("product_id", "user_id", name="uq_review_product_user"),
     )
+
+
+class ExternalCallResult(Base):
+    __tablename__ = "external_call_results"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    correlation_id = Column(String(64), index=True, nullable=True)
+    status_code = Column(Integer, nullable=True)
+    success = Column(Boolean, nullable=False, default=True)
+    response_time_ms = Column(Integer, nullable=False)
+    sleep_seconds = Column(Integer, nullable=True)
+    payload = Column(JSON, nullable=True)
+    error_message = Column(String(255), nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())

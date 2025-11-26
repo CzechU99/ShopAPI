@@ -94,11 +94,11 @@ services:
       EXT_CLIENT_CONNECT_TIMEOUT: 2
       EXT_CLIENT_READ_TIMEOUT: 180
       EXT_CLIENT_WRITE_TIMEOUT: 5 
-      EXT_CLIENT_POOL_TIMEOUT: 0.05
-      EXT_CLIENT_MAX_CONNECTIONS: 100
-      EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS: 20
+      EXT_CLIENT_POOL_TIMEOUT: 1.0
+      EXT_CLIENT_MAX_CONNECTIONS: 200
+      EXT_CLIENT_MAX_KEEPALIVE_CONNECTIONS: 50
       EXT_CLIENT_KEEPALIVE_EXPIRY: 5
-      EXT_CLIENT_HTTP2_ENABLED: "true"
+      EXT_CLIENT_HTTP2_ENABLED: "false"
       EXT_CLIENT_CA_CERT: /app/certs/local_ca.crt
     volumes:
       - ./:/app      
@@ -128,8 +128,8 @@ services:
       - db
       - tempo
     environment:
-      EXTERNAL_DELAY_MIN_SECONDS: 0
-      EXTERNAL_DELAY_MAX_SECONDS: 0
+      EXTERNAL_DELAY_MIN_SECONDS: 30
+      EXTERNAL_DELAY_MAX_SECONDS: 120
 
   postgres_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter:latest

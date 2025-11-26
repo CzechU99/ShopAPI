@@ -1,8 +1,9 @@
 # app/services/external_client.py
 import asyncio
 import logging
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
 from opentelemetry.propagate import inject
@@ -18,6 +19,13 @@ EXT_SERVICE_FAILURES = Counter(
 
 _client_lock: Optional[asyncio.Lock] = None
 _http_client: Optional[httpx.AsyncClient] = None
+
+
+@dataclass
+class ExternalServiceResponse:
+    status_code: int
+    body: dict[str, Any]
+    elapsed_ms: int
 
 EXTERNAL_PATH = "/external/data"
 
@@ -81,7 +89,9 @@ async def _get_http_client() -> httpx.AsyncClient:
     return _http_client
 
 
-async def call_external_service(correlation_id: Optional[str] = None) -> dict:
+async def call_external_service(
+    correlation_id: Optional[str] = None,
+) -> ExternalServiceResponse:
     client = await _get_http_client()
     headers = {}
     if correlation_id:
@@ -93,6 +103,9 @@ async def call_external_service(correlation_id: Optional[str] = None) -> dict:
     try:
         response = await client.get(EXTERNAL_PATH, headers=headers)
         response.raise_for_status()
+        payload = response.json()
+        elapsed = response.elapsed.total_seconds() if response.elapsed else 0.0
+        elapsed_ms = int(elapsed * 1000)
         logger.info(
             "external_client: call success",
             extra={
@@ -100,7 +113,11 @@ async def call_external_service(correlation_id: Optional[str] = None) -> dict:
                 "correlation_id": correlation_id,
             },
         )
-        return response.json()
+        return ExternalServiceResponse(
+            status_code=response.status_code,
+            body=payload,
+            elapsed_ms=elapsed_ms,
+        )
     except Exception as exc:
         EXT_SERVICE_FAILURES.inc()
         logger.error(
